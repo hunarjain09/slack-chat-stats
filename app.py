@@ -23,13 +23,30 @@ def hello_world():
         result = client.conversations_history(channel=channel_id[0], limit=100)
         messages = result["messages"]
         for message in messages:
+            conversation_map = {
+                'user': None,
+                'message': None, 
+                'conversation': None, 
+                'number_of_replies': None, 
+                'number_of_reactions': None
+            }
             # unique users in the conversation
             if 'user' in message:
+<<<<<<< Updated upstream
                 # users.add('@'+get_username(message['user'],client))
+=======
+>>>>>>> Stashed changes
                 # create a conversation history of user and message
-                conversation_history.append((message['user'], message['text']))
-        # call NLP library\
-        init(conversation_history)
+                conversation_map['user'] = message['user']
+                conversation_map['message'] = message['text']
+                conversation_map['conversation'] = (message['user'], message['text'])
+                if 'reactions' in message:
+                    conversation_map['number_of_reactions'] = len(message['reactions'])
+                if 'reply_count' in message: 
+                    conversation_map['number_of_replies'] = message['reply_count']
+                conversation_history.append(conversation_map)
+        # call NLP library
+        init([message['conversation'] for message in conversation_history])
         if req_data.get('text'):
             total_summary = summary_for_all_users()
             get_users_arr = req_data.get('text').split(' ')
