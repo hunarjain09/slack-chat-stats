@@ -1,6 +1,7 @@
 from flask import Flask, request
 import logging
 import os
+import re
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from summarize import summarize, summary_for_all_users, init
@@ -21,18 +22,21 @@ def hello_world():
         # last 100 conversations
         result = client.conversations_history(channel=channel_id[0], limit=100)
         messages = result["messages"]
-        users = set()
         for message in messages:
             # unique users in the conversation
             if 'user' in message:
-                users.add(message['user'])
-                #users.add('@'+get_username(message['user'],client))
+                # users.add('@'+get_username(message['user'],client))
                 # create a conversation history of user and message
                 conversation_history.append((message['user'], message['text']))
         # call NLP library\
         init(conversation_history)
         if req_data.get('text'):
-            summary = summary_for_all_users()
+            total_summary = summary_for_all_users()
+            get_users_arr = req_data.get('text').split(' ')
+            summary = {}
+            for userdata in get_users_arr:
+                user = re.findall(r"[A-Z]\w+",userdata)
+                summary[f"<@{user[0]}>"] = total_summary[user[0]]
         else:
             summary = summarize()
         logger.info("{} messages found in {}".format(len(conversation_history), id))
@@ -40,12 +44,7 @@ def hello_world():
         logger.error("Error creating conversation: {}".format(e))
     return summary
 
-def get_username(userId,client):
-    response = client.users_profile_get(user = userId)
-    username = ''
-    if response['ok']:
-        username = response['profile']['real_name']
-    return username
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888)

@@ -53,7 +53,7 @@ def summary_for_all_users():
     user_summary = defaultdict()
     for user in inputParam.keys():
         user_summary[user] = summary_by_user(user)
-    return json.dumps(user_summary, indent=4)
+    return user_summary
 
     
 
