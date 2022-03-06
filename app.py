@@ -24,7 +24,7 @@ def hello_world():
         # last 100 conversations
         result = client.conversations_history(channel=channel_id[0], limit=100)
         messages = result["messages"]
-        best_reply, best_reply_count, best_reaction_count, best_reaction = None, None, None, None
+        best_reply, best_reply_count, best_reaction_count, best_reaction = None, 0 , 0, None
         for message in messages:
             conversation_map = {
                 'user': None,
