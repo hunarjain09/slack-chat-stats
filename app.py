@@ -4,9 +4,9 @@ import os
 import re
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-
+from collections import Counter
 import slack_util
-from summarize import summarize, summary_for_all_users, init
+from summarize import *
 
 
 app = Flask(__name__)
@@ -24,7 +24,8 @@ def hello_world():
         # last 100 conversations
         result = client.conversations_history(channel=channel_id[0], limit=100)
         messages = result["messages"]
-        best_reply, best_reply_count, best_reaction_count, best_reaction = None, 0 , 0, None
+        best_reply, best_reply_count, best_reaction_count, best_reaction = None, 0, 0, None
+        users = []
         for message in messages:
             conversation_map = {
                 'user': None,
@@ -35,6 +36,7 @@ def hello_world():
             }
             # unique users in the conversation
             if 'user' in message:
+                users.append(message['user'])
                 conversation_map['user'] = message['user']
                 conversation_map['message'] = message['text']
                 conversation_map['conversation'] = (message['user'], message['text'])
@@ -55,26 +57,32 @@ def hello_world():
                     elif conversation_map['number_of_replies'] > best_reply_count:
                         best_reply = conversation_map
                 conversation_history.append(conversation_map)
-        # call NLP library
+        counter = Counter(users)
+        sorted_values = sorted(counter.keys(), key=lambda x: counter[x])
+        best_user = sorted_values[-1]
+
         init([message['conversation'] for message in conversation_history])
         if req_data.get('text'):
-            total_summary = summary_for_all_users()
             get_users_arr = req_data.get('text').split(' ')
             summary = {}
             for userdata in get_users_arr:
                 user = re.findall(r"[A-Z]\w+",userdata)
-                summary[f"<@{user[0]}>"] = total_summary[user[0]]
-            summary_details = dict()
-            if best_reply:
-                summary_details['top_replies'] = f"<@{best_reply['user']}> : {best_reply['message']}"
-            if best_reaction:
-                summary_details['top_reactions'] = f"<@{best_reaction['user']}> : {best_reaction['message']}"
-            final_summary = slack_util.beautify_response(user_name=f"<@{req_data.get('user_id')}>",
-                                                         user_summaries=summary,
-                                                         summary_details=summary_details)
+                summary[f"<@{user[0]}>"] = summary_by_user(user[0])
         else:
-            summary = summarize()
-            final_summary = summary
+            summary = {'':summarize()}
+
+        summary_details = dict()
+        if best_reply:
+            summary_details['top_replies'] = f"<@{best_reply['user']}> : {best_reply['message']}"
+        if best_reaction:
+            summary_details['top_reactions'] = f"<@{best_reaction['user']}> : {best_reaction['message']}"
+
+        summary_details['top_spammer'] = f"<@{best_user}>"
+        summary_details['top_keyword'] = get_top_keywords()
+        final_summary = slack_util.beautify_response(user_name=f"<@{req_data.get('user_id')}>",
+                                                     user_summaries=summary,
+                                                     summary_details=summary_details)
+
         logger.info("{} messages found in {}".format(len(conversation_history), id))
     except SlackApiError as e:
         logger.error("Error creating conversation: {}".format(e))

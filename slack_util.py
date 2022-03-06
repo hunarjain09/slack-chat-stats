@@ -42,4 +42,8 @@ def beautify_response(user_name, user_summaries=None, summary_details=None):
             bs['blocks'] += [ get_summary("Top message (reactions) :ghost: : " + summary_details['top_reactions'])]
         if 'top_replies' in summary_details:
             bs['blocks'] += [ get_summary("Top message (replies) :innocent: : " + summary_details['top_replies'])]
+        if 'top_spammer' in summary_details:
+            bs['blocks'] += [ get_summary("Top spammer (replies) :eyes: : " + summary_details['top_spammer'])]
+        if 'top_keyword' in summary_details:
+            bs['blocks'] += [ get_summary("Topics  :books: : " + summary_details['top_keyword'])]
     return bs
