@@ -46,4 +46,6 @@ def beautify_response(user_name, user_summaries=None, summary_details=None):
             bs['blocks'] += [ get_summary("Top spammer (replies) :eyes: : " + summary_details['top_spammer'])]
         if 'top_keyword' in summary_details:
             bs['blocks'] += [ get_summary("Topics  :books: : " + summary_details['top_keyword'])]
+        if 'group_negativity' in summary_details:
+            bs['blocks'] += [get_summary("Group Negativity Index  :fearful: : " + summary_details['group_negativity'])]
     return bs

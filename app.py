@@ -6,6 +6,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from collections import Counter
 import slack_util
+import summarize
 from summarize import *
 
 
@@ -79,6 +80,7 @@ def hello_world():
 
         summary_details['top_spammer'] = f"<@{best_user}>"
         summary_details['top_keyword'] = get_top_keywords()
+        summary_details['group_negativity'] = check_negativity()
         final_summary = slack_util.beautify_response(user_name=f"<@{req_data.get('user_id')}>",
                                                      user_summaries=summary,
                                                      summary_details=summary_details)
